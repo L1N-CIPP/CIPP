@@ -13,6 +13,7 @@ export const CippFormCondition = (props) => {
     children,
     formControl,
     disabled = false,
+    clearOnHide = true, // New prop to control whether to clear values when hidden
   } = props;
 
   if (
@@ -181,6 +182,24 @@ export const CippFormCondition = (props) => {
             (item) => typeof item?.value === "string" && item.value.includes(compareValue)
           )
         );
+      case "isOneOf":
+        // Check if the watched value is one of the values in the compareValue array
+        if (!Array.isArray(compareValue)) {
+          console.warn(
+            "CippFormCondition: isOneOf compareType requires compareValue to be an array"
+          );
+          return false;
+        }
+        return compareValue.some((value) => isEqual(watchedValue, value));
+      case "isNotOneOf":
+        // Check if the watched value is NOT one of the values in the compareValue array
+        if (!Array.isArray(compareValue)) {
+          console.warn(
+            "CippFormCondition: isNotOneOf compareType requires compareValue to be an array"
+          );
+          return false;
+        }
+        return !compareValue.some((value) => isEqual(watchedValue, value));
       default:
         return false;
     }
@@ -188,7 +207,7 @@ export const CippFormCondition = (props) => {
 
   // Reset field values when condition is not met and action is "hide"
   useEffect(() => {
-    if (action === "hide" && !isConditionMet()) {
+    if (action === "hide" && !isConditionMet() && clearOnHide) {
       const fieldNames = extractFieldNames(children);
 
       // Reset each field
@@ -202,7 +221,7 @@ export const CippFormCondition = (props) => {
         }
       });
     }
-  }, [watcher, action]);
+  }, [watcher, action, clearOnHide]);
 
   const disableChildren = (children) => {
     return React.Children.map(children, (child) => {
